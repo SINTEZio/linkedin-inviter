@@ -1,0 +1,59 @@
+Tab Tab1 = instance.ActiveTab; //открываю активную влкаду
+
+int SkokaDobavit = Convert.ToInt32(project.Variables["skolko_dobav"].Value);
+int vremya1 = Convert.ToInt32(project.Variables["vremya1"].Value);
+int vremya2 = Convert.ToInt32(project.Variables["vremya2"].Value);
+bool blnWruteName = Convert.ToBoolean(project.Variables["WriteName"].Value);
+string strLink = project.Variables["link_invite"].Value;
+string strTextPers = project.Variables["textPers"].Value;
+string strName = string.Empty;
+
+Random rndGenerator = new Random(); //создаю новую переменную для того чтобы делать временной интервал от - до в будущем для задержки
+
+Tab1.Navigate(strLink);
+Tab1.WaitDownloading();
+int m=-1;
+
+for (int i=0; i<100; i++) {
+	Tab1.FindElementByXPath("//div[@class='search-result__wrapper']/descendant::button[text()='Установить контакт' or text()='Follow' or text()='Connect']",0).Focus();
+	instance.WaitFieldEmulationDelay();
+	// Эмулировать ввод текста
+	instance.SendText("{END}", 15);
+	Thread.Sleep(3000);
+	instance.WaitFieldEmulationDelay();
+	instance.SendText("{HOME}", 15);
+	Thread.Sleep(3000);
+	HtmlElementCollection Links = Tab1.FindElementsByXPath("//div[@class='search-result__wrapper']/descendant::button[text()='Установить контакт' or text()='Follow' or text()='Connect']");
+	foreach(HtmlElement elLinks in Links.Elements) {
+		m++;
+		elLinks.Click();
+		Tab1.FindElementByXPath("//button[@class='button-secondary-large']",0).Click();
+ 		Tab1.FindElementByXPath("//textarea[@name='message']",0).SetValue(strTextPers, "Full");
+		Tab1.FindElementByXPath("//button[contains(@class, 'button-primary-large') and text()='Send invitation' or text()='Отправить приглашение']",0).Click();
+		Thread.Sleep(1000);	
+
+//		if (blnWruteName) {
+//			strName = new Regex(@".*(?=\ )").Match(elLinks.FindChildByXPath("//div[@class='search-result__wrapper']/descendant::span[contains(@class, 'name actor-name')]",0).InnerText).Value;
+//			Tab1.FindElementByXPath("//button[@class='button-secondary-large']",0).Click();
+//	 		Tab1.FindElementByXPath("//textarea[@name='message']",0).SetValue(strName+", "+strTextPers, "Full");
+//			Tab1.FindElementByXPath("//button[contains(@class, 'button-primary-large') and text()='Send invitation' or text()='Отправить приглашение']",0).Click();
+//			Thread.Sleep(1000);	
+//		} else {
+//			Tab1.FindElementByXPath("//button[@class='button-secondary-large']",0).Click();
+//			Tab1.FindElementByXPath("//textarea[@name='message']",0).SetValue(strTextPers, "Full");
+//			Tab1.FindElementByXPath("//button[contains(@class, 'button-primary-large') and text()='Send invitation' or text()='Отправить приглашение']",0).Click();
+//			Thread.Sleep(1000);	
+//		}
+		Thread.Sleep(rndGenerator.Next(vremya1, vremya2)*1000);
+		if (m>SkokaDobavit) {
+			project.SendInfoToLog(string.Format("Отправил {0} инвайтов",m),true);
+			return "oki";
+		}
+	}
+	Tab1.FindElementByXPath("//div[contains(@class, 'next-text')]", 0).Click();
+	Thread.Sleep(rndGenerator.Next(5000, 10000));
+	Tab1.WaitDownloading();
+}
+Global.SpecialForms.AlertNotificator.Instance.DisplayAlert("Завершение", "Инвайтинг выполнен", null, 15000);
+project.SendInfoToLog(string.Format("Инвайтинг завершен"),true);
+return "oki";
